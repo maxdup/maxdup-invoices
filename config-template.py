@@ -13,7 +13,8 @@ CLIENTS = {
             'city': '',
         },
         'rate': 0,
-        'repos': ['/repo/path']
+        'repos': [{'path': '/repo/path',
+                   'name': 'repo print name'}]
     },
     'client_project2': {
         'summary': '',

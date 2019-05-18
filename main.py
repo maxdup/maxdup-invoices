@@ -1,7 +1,6 @@
 from git import *
-from src.api import WorkSession
+from src.api import WorkSession, Commit
 from src.invoice import MyInvoice
-import re
 import os
 import sys
 import csv
@@ -42,30 +41,6 @@ with open(sys.argv[1], "r", encoding='utf-8-sig') as csv_file:
             projects[work_session.project].append(work_session)
 
 
-class Commit():
-
-    def __init__(self, data):
-        lines = data.split('\n')
-        message = ''
-        self.merge = False
-        self.date = None
-        for line in lines:
-            if (line == '' or line == '\n') and not self.date:
-                pass
-            elif bool(re.match('merge:', line, re.IGNORECASE)):
-                self.merge = True
-                pass
-            elif bool(re.match('author:', line, re.IGNORECASE)):
-                self.author = line.split('Author: ')[1].strip().split(' ')[0]
-                pass
-            elif bool(re.match('date:', line, re.IGNORECASE)):
-                self.date = line.split('Date: ')[1].strip().split(' ')[0]
-                pass
-            elif self.date:
-                message += line
-        self.message = message.strip()
-
-
 for k, v in projects.items():
     # for each Project, find commits
     daily_log = ''
@@ -75,22 +50,28 @@ for k, v in projects.items():
         pass
 
     for repo in CLIENTS[k]['repos']:
-        repos.append(Git("../soulzone-web-shared"))
+        # pull changes
+        Repo(repo['path']).remotes.origin.pull
+        # add repo
+        repository = Git(repo['path'])
+        repos.append(repository)
 
-    for work_session in v:
-        # for each session
-        since = datetime.strftime(work_session.date, '"%Y-%m-%d"')
-        until = datetime.strftime(
-            work_session.date + timedelta(days=1), '"%Y-%m-%d"')
+        for work_session in v:
+            # for each session
+            since = datetime.strftime(work_session.date, '"%Y-%m-%d"')
+            until = datetime.strftime(
+                work_session.date + timedelta(days=1), '"%Y-%m-%d"')
 
-        # for each repo
-        for repo in repos:
-            daily_log = repo.log(since=since, until=until, date='raw')
+            daily_log = repository.log(since=since, until=until, date='raw')
             for raw_commit in daily_log.split('\ncommit'):
-                commit = Commit(raw_commit)
-                if commit.author == 'maxime' or\
-                   commit.author == 'maxdup':
-                    work_session.add_commit(commit)
+                if len(raw_commit) > 2:
+                    commit = Commit(raw_commit)
+                    commit.repo = repo['name']
+                    if commit.author == 'maxime' or \
+                       commit.author == 'maxdup':
+                        work_session.add_commit(commit)
+
+            work_session.sort_commits()
 
 for k, v in projects.items():
     # for each Project, create an invoice

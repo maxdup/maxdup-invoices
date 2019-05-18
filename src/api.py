@@ -2,6 +2,7 @@ from datetime import datetime
 
 from InvoiceGenerator.api import Item
 
+import re
 from operator import mul
 from decimal import Decimal
 factors = (60, 1, 1/60)
@@ -22,19 +23,24 @@ class WorkSession(Item):
         self.date = datetime.strptime(
             self._description.split(' - ')[0], '%Y/%m/%d')
 
+        self.repo = ''
         self.commits = []
 
     def detailed_description(self):
         detailed_description = self._description
         if self.commits:
-            detailed_description += '\nCommits:'
+            detailed_description += '<br/>Commits:'
             for commit in self.commits:
                 if not commit.merge:
-                    detailed_description += ('\n' + commit.message)
+                    detailed_description += \
+                        ('<br/>• (' + commit.repo + ') ' + commit.message)
         return detailed_description
 
     def add_commit(self, commit):
         self.commits.append(commit)
+
+    def sort_commits(self):
+        self.commits.sort(key=lambda x: x.date)
 
     @property
     def description(self):
@@ -46,3 +52,27 @@ class WorkSession(Item):
     def count(self, value):
         self._count = Decimal(
             sum(map(mul, map(int, value.split(':')), factors)) / 60)
+
+
+class Commit():
+
+    def __init__(self, data):
+        lines = data.split('\n')
+        message = ''
+        self.merge = False
+        self.date = None
+        for line in lines:
+            if (line == '' or line == '\n') and not self.date:
+                pass
+            elif bool(re.match('merge:', line, re.IGNORECASE)):
+                self.merge = True
+                pass
+            elif bool(re.match('author:', line, re.IGNORECASE)):
+                self.author = line.split('Author: ')[1].strip().split(' ')[0]
+                pass
+            elif bool(re.match('date:', line, re.IGNORECASE)):
+                self.date = line.split('Date: ')[1].strip().split(' ')[0]
+                pass
+            elif self.date:
+                message += line
+        self.message = message.strip()
