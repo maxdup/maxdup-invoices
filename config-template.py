@@ -7,9 +7,13 @@ PROVIDER = {
     'email': ''}
 CLIENTS = {
     'client_project1': {
-        'summary': '',
-        'address': '',
-        'city': '',
+        'info': {
+            'summary': '',
+            'address': '',
+            'city': '',
+        },
+        'rate': 0,
+        'repos': ['/repo/path']
     },
     'client_project2': {
         'summary': '',

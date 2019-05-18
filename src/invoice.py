@@ -3,8 +3,6 @@ from InvoiceGenerator.pdf import SimpleInvoice, prepare_invoice_draw
 from reportlab.lib.units import mm
 
 from operator import mul
-import decimal
-from decimal import Decimal
 
 
 class MyInvoice(SimpleInvoice):
