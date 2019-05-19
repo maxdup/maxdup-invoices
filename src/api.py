@@ -24,29 +24,25 @@ class WorkSession(Item):
             self._description.split(' - ')[0], '%Y/%m/%d')
 
         self.repo = ''
-        self.commits = []
-
-    def detailed_description(self):
-        detailed_description = self._description
-        if self.commits:
-            detailed_description += '<br/>Commits:'
-            for commit in self.commits:
-                if not commit.merge:
-                    detailed_description += \
-                        ('<br/>• (' + commit.repo + ') ' + commit.message)
-        return detailed_description
+        self._commits = []
 
     def add_commit(self, commit):
-        self.commits.append(commit)
+        self._commits.append(commit)
 
     def sort_commits(self):
-        self.commits.sort(key=lambda x: x.date)
+        self._commits.sort(key=lambda x: x.date)
 
     @property
-    def description(self):
-        """ Short description of the item. """
-        desc = self.detailed_description()
-        return desc
+    def commits(self):
+
+        if not self._commits:
+            return ''
+
+        details = 'Commits:'
+        for commit in self._commits:
+            if not commit.merge:
+                details += ('<br/>(' + commit.repo + ') ' + commit.message)
+        return details
 
     @Item.count.setter
     def count(self, value):

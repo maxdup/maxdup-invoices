@@ -51,22 +51,25 @@ for k, v in projects.items():
 
     for repo in CLIENTS[k]['repos']:
         # pull changes
-        Repo(repo['path']).remotes.origin.pull
+        r = Repo(repo['path'])
+        r.remotes.origin.pull()
+
         # add repo
         repository = Git(repo['path'])
         repos.append(repository)
 
         for work_session in v:
             # for each session
-            since = datetime.strftime(work_session.date, '"%Y-%m-%d"')
-            until = datetime.strftime(
-                work_session.date + timedelta(days=1), '"%Y-%m-%d"')
+            since = datetime.strftime(
+                work_session.date - timedelta(days=1), '"%Y-%m-%d"')
+            until = datetime.strftime(work_session.date, '"%Y-%m-%d"')
 
             daily_log = repository.log(since=since, until=until, date='raw')
             for raw_commit in daily_log.split('\ncommit'):
                 if len(raw_commit) > 2:
                     commit = Commit(raw_commit)
                     commit.repo = repo['name']
+
                     if commit.author == 'maxime' or \
                        commit.author == 'maxdup':
                         work_session.add_commit(commit)
